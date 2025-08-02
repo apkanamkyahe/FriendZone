@@ -198,58 +198,63 @@
   </form>
 
   <script src="/socket.io/socket.io.js"></script>
-<script>
-  const socket = io();
+  <script>
+    const socket = io();
 
-  let username = '';
-  while (!username) {
-    username = prompt('Enter your name:');
-    if (username) username = username.trim();
-  }
-
-  const form = document.getElementById('form');
-  const input = document.getElementById('input');
-  const messages = document.getElementById('messages');
-
-  function addMessageToChat(msg) {
-    const container = document.createElement('div');
-    container.classList.add('message-container');
-
-    if (msg.username === username) {
-      container.classList.add('sent');
-    } else {
-      container.classList.add('received');
+    // Get username from localStorage or ask for it
+    let username = localStorage.getItem('username');
+    while (!username) {
+      username = prompt('Enter your name:');
+      if (username) {
+        username = username.trim();
+        localStorage.setItem('username', username);
+      }
     }
 
-    const nameElem = document.createElement('div');
-    nameElem.classList.add('username');
-    nameElem.textContent = msg.username;
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const messages = document.getElementById('messages');
 
-    const messageElem = document.createElement('div');
-    messageElem.classList.add('message');
-    messageElem.textContent = msg.text;
+    function addMessageToChat(msg) {
+      const container = document.createElement('div');
+      container.classList.add('message-container');
 
-    container.appendChild(nameElem);
-    container.appendChild(messageElem);
-    messages.appendChild(container);
-    messages.scrollTop = messages.scrollHeight;
-  }
+      if (msg.username === username) {
+        container.classList.add('sent');
+      } else {
+        container.classList.add('received');
+      }
 
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-    if (input.value) {
-      socket.emit('chat message', { username: username, text: input.value });
-      input.value = '';
+      const nameElem = document.createElement('div');
+      nameElem.classList.add('username');
+      nameElem.textContent = msg.username;
+
+      const messageElem = document.createElement('div');
+      messageElem.classList.add('message');
+      messageElem.textContent = msg.text;
+
+      container.appendChild(nameElem);
+      container.appendChild(messageElem);
+
+      messages.appendChild(container);
+      messages.scrollTop = messages.scrollHeight;
     }
-  });
 
-  socket.on('chat message', function(msg) {
-    addMessageToChat(msg);
-  });
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (input.value) {
+        socket.emit('chat message', { username: username, text: input.value });
+        input.value = '';
+      }
+    });
 
-  socket.on('chat history', function(history) {
-    history.forEach(msg => addMessageToChat(msg));
-  });
-</script>
+    socket.on('chat message', function(msg) {
+      addMessageToChat(msg);
+    });
+
+    socket.on('chat history', function(history) {
+      history.forEach(msg => addMessageToChat(msg));
+    });
+  </script>
 </body>
 </html>
