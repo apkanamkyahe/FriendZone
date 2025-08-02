@@ -30,6 +30,7 @@
       scrollbar-width: thin;
       scrollbar-color: #7c6fbe transparent;
     }
+    /* Custom scrollbar for WebKit */
     #messages::-webkit-scrollbar {
       width: 8px;
     }
@@ -50,14 +51,18 @@
       user-select: none;
       position: relative;
     }
+
     .sent {
       align-self: flex-end;
       text-align: right;
     }
+
     .received {
       align-self: flex-start;
       text-align: left;
     }
+
+    /* Username above message, centered */
     .username {
       font-weight: 700;
       font-size: 13px;
@@ -70,6 +75,7 @@
       font-family: 'Montserrat', sans-serif;
       text-shadow: 0 0 4px rgba(255 255 255 / 0.2);
     }
+
     .message {
       padding: 14px 20px;
       border-radius: 22px;
@@ -85,6 +91,7 @@
       user-select: text;
       transition: background 0.3s ease;
     }
+
     .sent .message {
       background: linear-gradient(145deg, #4c51bf, #2a36d4);
       color: #e4e8ff;
@@ -98,12 +105,15 @@
         0 6px 18px rgba(80, 94, 255, 0.8),
         inset 0 0 16px rgba(162, 175, 255, 0.45);
     }
+
     .received .message:hover {
       background: linear-gradient(145deg, #3a3742, #4c4958);
       box-shadow:
         0 6px 14px rgba(70, 70, 70, 0.7),
         inset 0 0 12px rgba(255, 255, 255, 0.08);
     }
+
+    /* Chat form container */
     #form {
       display: flex;
       padding: 15px 30px;
@@ -111,8 +121,6 @@
       box-shadow: inset 0 1px 5px rgba(255 255 255 / 0.1);
       border-top-left-radius: 20px;
       border-top-right-radius: 20px;
-      align-items: center;
-      gap: 10px;
     }
     #input {
       flex-grow: 1;
@@ -137,6 +145,7 @@
       color: #eee;
     }
     #send {
+      margin-left: 15px;
       padding: 0 28px;
       border: none;
       border-radius: 30px;
@@ -158,28 +167,33 @@
       background: #393fc6;
       box-shadow: 0 2px 6px rgba(35, 40, 109, 0.9);
     }
+
+    /* Change name button */
     #changeNameBtn {
-      padding: 10px 18px;
+      margin-left: 15px;
+      padding: 0 18px;
       border: none;
       border-radius: 30px;
-      background: #ff6f61;
-      color: white;
+      background: #f05a5a;
+      color: #fff;
       font-weight: 700;
       font-size: 14px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(255, 111, 97, 0.8);
+      box-shadow: 0 4px 12px rgba(240, 90, 90, 0.8);
       transition: background 0.3s ease;
       user-select: none;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     #changeNameBtn:hover {
-      background: #e55b4b;
-      box-shadow: 0 5px 15px rgba(229, 91, 75, 0.9);
+      background: #e04848;
+      box-shadow: 0 5px 15px rgba(224, 72, 72, 0.9);
     }
     #changeNameBtn:active {
-      background: #c64b3e;
-      box-shadow: 0 2px 6px rgba(198, 75, 62, 0.9);
+      background: #b83b3b;
+      box-shadow: 0 2px 6px rgba(184, 59, 59, 0.9);
     }
+
+    /* Responsive */
     @media (max-width: 600px) {
       #messages {
         padding: 15px 20px;
@@ -189,23 +203,19 @@
       }
       #form {
         padding: 12px 20px;
-        flex-wrap: wrap;
-        gap: 8px;
       }
       #input {
         font-size: 16px;
         padding: 12px 15px;
-        flex-grow: 1  !important;
-        min-width: 60%;
       }
       #send {
         padding: 0 20px;
         font-size: 16px;
       }
       #changeNameBtn {
-        flex-basis: 100%;
-        padding: 10px 0;
-        font-size: 16px;
+        padding: 0 12px;
+        font-size: 12px;
+        margin-left: 10px;
       }
     }
   </style>
@@ -222,7 +232,7 @@
   <script>
     const socket = io();
 
-    // Get username from localStorage or prompt
+    // Load or prompt for username
     let username = localStorage.getItem('username');
     while (!username) {
       username = prompt('Enter your name:');
@@ -230,6 +240,13 @@
         username = username.trim();
         localStorage.setItem('username', username);
       }
+    }
+
+    // Generate or load unique userId
+    let userId = localStorage.getItem('userId');
+    if (!userId) {
+      userId = '_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('userId', userId);
     }
 
     const form = document.getElementById('form');
@@ -241,7 +258,7 @@
       const container = document.createElement('div');
       container.classList.add('message-container');
 
-      if (msg.username === username) {
+      if (msg.userId === userId) {
         container.classList.add('sent');
       } else {
         container.classList.add('received');
@@ -257,47 +274,25 @@
 
       container.appendChild(nameElem);
       container.appendChild(messageElem);
-      messages.appendChild(container);
-      messages.scrollTop = messages.scrollHeight;
-    }
 
-    function addSystemMessage(text) {
-      const container = document.createElement('div');
-      container.classList.add('message-container', 'received');
-      container.style.alignSelf = 'center';
-      container.style.textAlign = 'center';
-
-      const messageElem = document.createElement('div');
-      messageElem.classList.add('message');
-      messageElem.style.background = 'transparent';
-      messageElem.style.color = '#ff6f61';
-      messageElem.style.fontStyle = 'italic';
-      messageElem.style.boxShadow = 'none';
-      messageElem.textContent = text;
-
-      container.appendChild(messageElem);
       messages.appendChild(container);
       messages.scrollTop = messages.scrollHeight;
     }
 
     form.addEventListener('submit', function(e) {
       e.preventDefault();
-      if (input.value) {
-        socket.emit('chat message', { username: username, text: input.value });
+      if (input.value.trim()) {
+        socket.emit('chat message', { userId, username, text: input.value.trim() });
         input.value = '';
       }
     });
 
-    changeNameBtn.addEventListener('click', () => {
-      const oldName = username;
-      let newName = prompt('Enter your new name:');
-      if (newName) {
-        newName = newName.trim();
-        if (newName && newName !== oldName) {
-          username = newName;
-          localStorage.setItem('username', username);
-          addSystemMessage(`💬 User changed name from "${oldName}" to "${username}"`);
-        }
+    changeNameBtn.addEventListener('click', function() {
+      const newName = prompt('Enter your new name:');
+      if (newName && newName.trim()) {
+        username = newName.trim();
+        localStorage.setItem('username', username);
+        alert(`Name changed to ${username}`);
       }
     });
 
@@ -311,4 +306,3 @@
   </script>
 </body>
 </html>
-
