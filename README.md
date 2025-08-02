@@ -1,0 +1,2 @@
+# FriendZone
+Cool friendzone website
