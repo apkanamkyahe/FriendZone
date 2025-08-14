@@ -6,62 +6,47 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Setup storage folder for uploaded images
-const uploadFolder = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadFolder)) {
-  fs.mkdirSync(uploadFolder);
-}
+// Ensure uploads folder exists
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
-// Multer setup
+// Configure multer for image uploads
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadFolder);
-  },
-  filename: function (req, file, cb) {
-    // Unique filename
-    cb(null, Date.now() + '-' + file.originalname);
-  }
+  destination: (req, file, cb) => cb(null, 'uploads/'),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
-// Serve static files (HTML, CSS, JS, uploaded images)
+// Serve static files
 app.use(express.static(__dirname));
-app.use('/uploads', express.static(uploadFolder));
+app.use('/uploads', express.static(uploadDir));
 
-// In-memory image storage (just filenames for now)
-let imageHistory = [];
-
-// Endpoint to upload an image via POST
-app.post('/upload', upload.single('image'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).send('No image uploaded.');
-  }
-  const imageUrl = '/uploads/' + req.file.filename;
-  imageHistory.push(imageUrl);
-
-  // Broadcast new image to all clients
-  io.emit('new image', imageUrl);
-
-  res.json({ success: true, url: imageUrl });
-});
-
+// Serve index.html
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// Socket.IO
-io.on('connection', (socket) => {
+// Handle image uploads
+app.post('/upload', upload.single('image'), (req, res) => {
+  if (!req.file) return res.json({ success: false });
+
+  const url = `/uploads/${req.file.filename}`;
+  images.push(url);
+
+  io.emit('new image', url); // broadcast to all clients
+  res.json({ success: true, url });
+});
+
+// Store image URLs in memory
+let images = [];
+
+// Socket.IO connection
+io.on('connection', socket => {
+  // Send gallery history
+  socket.emit('gallery history', images);
   console.log('a user connected');
-
-  // Send previous images to new user
-  socket.emit('gallery history', imageHistory);
-
-  socket.on('disconnect', () => {
-    console.log('user disconnected');
-  });
 });
 
+// Start server
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+http.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
