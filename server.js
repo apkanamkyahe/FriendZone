@@ -3,30 +3,30 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 
-app.use(express.static(__dirname)); // serve files in this folder
+app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// In-memory storage for chat messages
-let messageHistory = [];
+// In-memory storage for images
+let galleryHistory = [];
 
 io.on('connection', (socket) => {
   console.log('a user connected');
 
-  // Send previous messages to new user
-  socket.emit('chat history', messageHistory);
+  // Send previous images to new user
+  socket.emit('gallery history', galleryHistory);
 
-  socket.on('chat message', (msg) => {
-    messageHistory.push(msg);
+  // Receive new image from user
+  socket.on('new image', (imgSrc) => {
+    galleryHistory.push(imgSrc);
 
-    // Limit history to last 100 messages (optional)
-    if (messageHistory.length > 100) {
-      messageHistory.shift();
-    }
+    // Limit to last 100 images
+    if (galleryHistory.length > 100) galleryHistory.shift();
 
-    io.emit('chat message', msg); // broadcast to all
+    // Broadcast new image to all users
+    io.emit('new image', imgSrc);
   });
 
   socket.on('disconnect', () => {
