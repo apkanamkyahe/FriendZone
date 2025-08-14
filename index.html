@@ -1,371 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FriendZone Chat — Clean & Sleek</title>
-  <style>
-    /* Reset and base */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-      color: #e0e0e8;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      user-select: none;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    #messages {
-      flex-grow: 1;
-      padding: 25px 40px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      scrollbar-width: thin;
-      scrollbar-color: #7c6fbe transparent;
-      backdrop-filter: blur(12px);
-      background: rgba(255 255 255 / 0.05);
-      border-radius: 20px 20px 0 0;
-      box-shadow:
-        inset 0 0 15px rgba(255, 255, 255, 0.05),
-        0 15px 30px rgba(0,0,0,0.7);
-      margin: 15px 30px 0 30px;
-      transition: background 0.4s ease;
-    }
-    #messages:hover {
-      background: rgba(255 255 255 / 0.08);
-    }
-    /* Custom scrollbar for WebKit */
-    #messages::-webkit-scrollbar {
-      width: 10px;
-    }
-    #messages::-webkit-scrollbar-track {
-      background: transparent;
-      margin: 10px 0;
-    }
-    #messages::-webkit-scrollbar-thumb {
-      background-color: #8c7aff;
-      border-radius: 10px;
-      border: 3px solid transparent;
-      background-clip: content-box;
-      transition: background-color 0.3s ease;
-    }
-    #messages::-webkit-scrollbar-thumb:hover {
-      background-color: #a99eff;
-    }
-
-    .message-container {
-      max-width: 70%;
-      display: flex;
-      flex-direction: column;
-      user-select: text;
-      position: relative;
-      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));
-      transition: transform 0.2s ease;
-    }
-    .message-container:hover {
-      transform: scale(1.03);
-      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.6));
-    }
-
-    .sent {
-      align-self: flex-end;
-      text-align: right;
-    }
-
-    .received {
-      align-self: flex-start;
-      text-align: left;
-    }
-
-    /* Username above message, centered with glow */
-    .username {
-      font-weight: 700;
-      font-size: 13px;
-      color: #cfcfe3dd;
-      margin-bottom: 8px;
-      text-align: center;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      font-family: 'Montserrat', sans-serif;
-      text-shadow:
-        0 0 6px rgba(180,180,255,0.7),
-        0 0 10px rgba(130,130,230,0.5);
-      user-select: text;
-    }
-
-    .message {
-      padding: 18px 24px;
-      border-radius: 28px;
-      line-height: 1.5;
-      font-size: 18px;
-      box-shadow:
-        0 8px 25px rgba(0,0,0,0.35),
-        inset 0 0 20px rgba(255,255,255,0.07);
-      word-wrap: break-word;
-      position: relative;
-      background: linear-gradient(145deg, #1f1c29, #2c2841);
-      cursor: default;
-      user-select: text;
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-      color: #d9dbf1;
-      font-weight: 500;
-      letter-spacing: 0.01em;
-      backdrop-filter: saturate(180%) blur(8px);
-    }
-
-    .sent .message {
-      background: linear-gradient(145deg, #545de8, #2a3bb7);
-      color: #f0f2ff;
-      box-shadow:
-        0 10px 25px rgba(73, 82, 221, 0.7),
-        inset 0 0 18px rgba(165, 178, 255, 0.45);
-    }
-    .sent .message:hover {
-      background: linear-gradient(145deg, #6777ff, #3c53e0);
-      box-shadow:
-        0 12px 30px rgba(98, 107, 255, 0.85),
-        inset 0 0 22px rgba(192, 202, 255, 0.6);
-    }
-
-    .received .message:hover {
-      background: linear-gradient(145deg, #3e3b4a, #5c5a6a);
-      box-shadow:
-        0 10px 25px rgba(60, 60, 70, 0.8),
-        inset 0 0 18px rgba(255, 255, 255, 0.1);
-    }
-
-    /* Chat form container with glass effect */
-    #form {
-      display: flex;
-      padding: 20px 40px;
-      background: rgba(30, 28, 40, 0.9);
-      box-shadow:
-        inset 0 2px 10px rgba(255 255 255 / 0.12),
-        0 -6px 20px rgba(50, 45, 100, 0.7);
-      border-top-left-radius: 30px;
-      border-top-right-radius: 30px;
-      backdrop-filter: saturate(180%) blur(12px);
-      user-select: none;
-      margin: 0 30px 30px 30px;
-      transition: background 0.3s ease;
-    }
-    #form:hover {
-      background: rgba(40, 38, 55, 0.95);
-    }
-
-    #input {
-      flex-grow: 1;
-      padding: 16px 26px;
-      font-size: 19px;
-      border-radius: 35px;
-      border: none;
-      outline: none;
-      background: rgba(58, 55, 69, 0.85);
-      color: #ddd;
-      box-shadow:
-        inset 4px 4px 12px #272532,
-        inset -4px -4px 12px #6a6790;
-      transition: background 0.4s ease, box-shadow 0.3s ease;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      user-select: text;
-    }
-    #input::placeholder {
-      color: #aaa;
-      font-style: italic;
-      user-select: none;
-    }
-    #input:focus {
-      background: rgba(76, 81, 159, 0.95);
-      box-shadow:
-        0 0 12px #5e67ff,
-        inset 0 0 10px #7f8aff;
-      color: #f0f2ff;
-    }
-
-    #send {
-      margin-left: 18px;
-      padding: 0 34px;
-      border: none;
-      border-radius: 35px;
-      background: linear-gradient(145deg, #676ffb, #3e4aff);
-      color: #fff;
-      font-weight: 700;
-      font-size: 19px;
-      cursor: pointer;
-      box-shadow:
-        0 6px 18px rgba(103, 111, 251, 0.9),
-        0 0 25px rgba(103, 111, 251, 0.7);
-      transition: background 0.35s ease, box-shadow 0.35s ease;
-      user-select: none;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    #send:hover {
-      background: linear-gradient(145deg, #7c86ff, #4a5bff);
-      box-shadow:
-        0 8px 22px rgba(124, 134, 255, 1),
-        0 0 30px rgba(124, 134, 255, 0.85);
-    }
-    #send:active {
-      background: linear-gradient(145deg, #545de8, #2a3bb7);
-      box-shadow:
-        0 3px 10px rgba(60, 63, 230, 0.85);
-    }
-
-    /* Change name button */
-    #changeNameBtn {
-      margin-left: 18px;
-      padding: 0 22px;
-      border: none;
-      border-radius: 35px;
-      background: linear-gradient(145deg, #f15a5a, #c93737);
-      color: #fff;
-      font-weight: 700;
-      font-size: 15px;
-      cursor: pointer;
-      box-shadow:
-        0 6px 18px rgba(241, 90, 90, 0.9),
-        0 0 22px rgba(241, 90, 90, 0.7);
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-      user-select: none;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    #changeNameBtn:hover {
-      background: linear-gradient(145deg, #f47575, #e54040);
-      box-shadow:
-        0 8px 24px rgba(244, 117, 117, 1),
-        0 0 28px rgba(244, 117, 117, 0.85);
-    }
-    #changeNameBtn:active {
-      background: linear-gradient(145deg, #b83b3b, #922525);
-      box-shadow:
-        0 4px 12px rgba(184, 59, 59, 0.95);
-    }
-
-    /* Responsive tweaks */
-    @media (max-width: 600px) {
-      #messages {
-        padding: 20px 25px;
-        margin: 15px 15px 0 15px;
-        max-height: calc(100vh - 160px);
-        border-radius: 15px 15px 0 0;
-      }
-      .message-container {
-        max-width: 90%;
-      }
-      #form {
-        padding: 15px 25px;
-        margin: 0 15px 25px 15px;
-        border-radius: 20px 20px 0 0;
-      }
-      #input {
-        font-size: 16px;
-        padding: 14px 18px;
-      }
-      #send {
-        padding: 0 26px;
-        font-size: 16px;
-        margin-left: 12px;
-      }
-      #changeNameBtn {
-        padding: 0 14px;
-        font-size: 13px;
-        margin-left: 12px;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Belonging Project Gallery</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1f1c2c, #928dab);
+    color: #f0f0f3;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  h1 { margin: 20px 0; }
+  #uploadBtn {
+    font-size: 40px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    background: #5a60f5;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+  }
+  #gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    max-width: 90%;
+    margin-bottom: 20px;
+  }
+  #gallery img {
+    width: 150px;
+    border-radius: 8px;
+    border: 2px solid #333;
+  }
+  #fileInput { display: none; }
+</style>
 </head>
 <body>
-  <div id="messages"></div>
-  <form id="form" action="">
-    <input id="input" autocomplete="off" placeholder="Type your message..." />
-    <button id="send">Send</button>
-    <button type="button" id="changeNameBtn">Change Name</button>
-  </form>
+<h1>Belonging Project Gallery</h1>
+<button id="uploadBtn">+</button>
+<p>Click here and paste your image or select a file</p>
+<input type="file" id="fileInput" accept="image/*" />
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
+<div id="gallery"></div>
 
-    let username = localStorage.getItem('username');
-    while (!username) {
-      username = prompt('Enter your name:');
-      if (username) {
-        username = username.trim();
-        localStorage.setItem('username', username);
-      }
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+const uploadBtn = document.getElementById('uploadBtn');
+const fileInput = document.getElementById('fileInput');
+const gallery = document.getElementById('gallery');
+
+// Function to add an image to the gallery
+function addImage(src) {
+  const img = document.createElement('img');
+  img.src = src;
+  gallery.appendChild(img);
+}
+
+// Load previous images
+socket.on('gallery history', (history) => {
+  history.forEach(imgSrc => addImage(imgSrc));
+});
+
+// Upload button click triggers file input
+uploadBtn.addEventListener('click', () => fileInput.click());
+
+// Handle file selection
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const src = event.target.result;
+    socket.emit('new image', src);
+  };
+  reader.readAsDataURL(file);
+});
+
+// Handle pasted images
+document.addEventListener('paste', (e) => {
+  const items = e.clipboardData.items;
+  for (let item of items) {
+    if (item.type.indexOf('image') === 0) {
+      const file = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const src = event.target.result;
+        socket.emit('new image', src);
+      };
+      reader.readAsDataURL(file);
     }
+  }
+});
 
-    let userId = localStorage.getItem('userId');
-    if (!userId) {
-      userId = '_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('userId', userId);
-    }
-
-    const form = document.getElementById('form');
-    const input = document.getElementById('input');
-    const messages = document.getElementById('messages');
-    const changeNameBtn = document.getElementById('changeNameBtn');
-
-    function addMessageToChat(msg) {
-      const container = document.createElement('div');
-      container.classList.add('message-container');
-
-      if (msg.userId === userId) {
-        container.classList.add('sent');
-      } else {
-        container.classList.add('received');
-      }
-
-      const nameElem = document.createElement('div');
-      nameElem.classList.add('username');
-      nameElem.textContent = msg.username;
-
-      const messageElem = document.createElement('div');
-      messageElem.classList.add('message');
-      messageElem.textContent = msg.text;
-
-      container.appendChild(nameElem);
-      container.appendChild(messageElem);
-
-      messages.appendChild(container);
-      messages.scrollTop = messages.scrollHeight;
-    }
-
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      if (input.value.trim()) {
-        socket.emit('chat message', { userId, username, text: input.value.trim() });
-        input.value = '';
-      }
-    });
-
-    changeNameBtn.addEventListener('click', function() {
-      const newName = prompt('Enter your new name:');
-      if (newName && newName.trim()) {
-        username = newName.trim();
-        localStorage.setItem('username', username);
-        alert(`Name changed to ${username}`);
-      }
-    });
-
-    socket.on('chat message', function(msg) {
-      addMessageToChat(msg);
-    });
-
-    socket.on('chat history', function(history) {
-      history.forEach(msg => addMessageToChat(msg));
-    });
-  </script>
+// Receive new image from server
+socket.on('new image', (src) => addImage(src));
+</script>
 </body>
 </html>
-
