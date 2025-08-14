@@ -1,106 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Belonging Project Gallery</title>
-<style>
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #1f1c2c, #928dab);
-    color: #f0f0f3;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  h1 { margin: 20px 0; }
-  #uploadBtn {
-    font-size: 40px;
-    cursor: pointer;
-    margin-bottom: 10px;
-    background: #5a60f5;
-    border: none;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 10px;
-  }
-  #gallery {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: center;
-    max-width: 90%;
-    margin-bottom: 20px;
-  }
-  #gallery img {
-    width: 150px;
-    border-radius: 8px;
-    border: 2px solid #333;
-  }
-  #fileInput { display: none; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Belonging Project Gallery</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1f1c2c;
+      color: #f0f0f3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    #addImage {
+      font-size: 28px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      background-color: #5a60f5;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    #addImage:hover {
+      background-color: #4348e3;
+    }
+
+    #gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    #gallery img {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+  </style>
 </head>
 <body>
-<h1>Belonging Project Gallery</h1>
-<button id="uploadBtn">+</button>
-<p>Click here and paste your image or select a file</p>
-<input type="file" id="fileInput" accept="image/*" />
+  <h1>Belonging Project Gallery</h1>
+  <button id="addImage">+</button>
+  <input type="file" id="fileInput" style="display:none;" accept="image/*">
+  <div id="gallery"></div>
 
-<div id="gallery"></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const addImageBtn = document.getElementById('addImage');
+    const fileInput = document.getElementById('fileInput');
+    const gallery = document.getElementById('gallery');
 
-<script src="/socket.io/socket.io.js"></script>
-<script>
-const socket = io();
-const uploadBtn = document.getElementById('uploadBtn');
-const fileInput = document.getElementById('fileInput');
-const gallery = document.getElementById('gallery');
+    const socket = io();
 
-// Function to add an image to the gallery
-function addImage(src) {
-  const img = document.createElement('img');
-  img.src = src;
-  gallery.appendChild(img);
-}
+    // Handle + button
+    addImageBtn.addEventListener('click', () => fileInput.click());
 
-// Load previous images
-socket.on('gallery history', (history) => {
-  history.forEach(imgSrc => addImage(imgSrc));
-});
+    // Handle file selection
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (!file) return;
 
-// Upload button click triggers file input
-uploadBtn.addEventListener('click', () => fileInput.click());
+      const formData = new FormData();
+      formData.append('image', file);
 
-// Handle file selection
-fileInput.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(event) {
-    const src = event.target.result;
-    socket.emit('new image', src);
-  };
-  reader.readAsDataURL(file);
-});
+      fetch('/upload', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          addImageToGallery(data.url);
+        }
+      })
+      .catch(err => console.error('Upload failed:', err));
+    });
 
-// Handle pasted images
-document.addEventListener('paste', (e) => {
-  const items = e.clipboardData.items;
-  for (let item of items) {
-    if (item.type.indexOf('image') === 0) {
-      const file = item.getAsFile();
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        const src = event.target.result;
-        socket.emit('new image', src);
-      };
-      reader.readAsDataURL(file);
+    // Add image to gallery
+    function addImageToGallery(url) {
+      const img = document.createElement('img');
+      img.src = url;
+      gallery.appendChild(img);
     }
-  }
-});
 
-// Receive new image from server
-socket.on('new image', (src) => addImage(src));
-</script>
+    // Receive new image broadcast
+    socket.on('new image', url => addImageToGallery(url));
+
+    // Load existing gallery on connect
+    socket.on('gallery history', images => {
+      images.forEach(url => addImageToGallery(url));
+    });
+  </script>
 </body>
 </html>
